@@ -6,9 +6,21 @@ MIN_NUM_FIELDS = 1
 MAX_NUM_FIELDS = 5
 
 # numFields = np.random.random_integers(MIN_NUM_FIELDS, MAX_NUM_FIELDS) # WIP: use this to randomize the number of grid fields generated
-MAX_NUM_FIELDS = 10
+MAX_NUM_FIELDS = 10 # must be >= 2
 ARENA_SIZE_IN_METERS = 5
+MAX_ASYMMETRY_RATIO = 4
 
+def checkAsymmetry(covMat):
+	symmetricEnough = 0
+	w,v = np.linalg.eig(covMat)
+	# print('eigenvalues: ' + str(w))
+	if np.abs(w[0]/w[1]) < MAX_ASYMMETRY_RATIO and np.abs(w[1]/w[0]) < MAX_ASYMMETRY_RATIO:
+		print('\nfield passed constraints\n')
+		symmetricEnough = 1
+	else:
+		print('\n\ntoo asymmetric --> computing a new field\n')
+	print('\neigenvalues: \n')
+	return symmetricEnough
 
 def makeFields(MAX_NUM_FIELDS, ARENA_SIZE_IN_METERS):
 	numFields = np.ceil(MAX_NUM_FIELDS * np.random.rand())
@@ -17,16 +29,26 @@ def makeFields(MAX_NUM_FIELDS, ARENA_SIZE_IN_METERS):
 	# for fieldInd in range(0,MAX_NUM_FIELDS):
 	for randPosition in randPositions:
 		print(randPosition)
-
 		m = randPosition
-		s = np.eye(2) # for circular fields
-		# s = np.eye(2) * np.random.rand(2) # for elliptical  fields; TO DO: constain it a min width
+
+		fieldPassesConstraints = 0
+		while fieldPassesConstraints == 0:
+			
+			### field shapes:
+			###		elliptical
+			# s = np.eye(2) * np.random.rand(2) -0.5 
+			### 	circular
+			# s = np.eye(2) # for circular fields
+			### 	random
+			s = np.random.rand(2,2) - 0.5
+			### 	hardcoded
+			# s = np.matrix('10 4; -4 1')
+			s = np.dot(s,s.transpose())
+			fieldPassesConstraints = checkAsymmetry(s) 
+
+		
 		k = multivariate_normal(mean=m, cov=s)
 		fields.append(k)
-
-		print('covariance matris s = ')
-		print(s)
-	print(fields)
 
 
 	# # create 2 kernels
